@@ -19,7 +19,7 @@ allprojects {
 subprojects {
     task allDeps(type: DependencyReportTask) {}
     group "com.daveanthonythomas.moshipack"
-    version "1.0.1"
+    version "1.0.2"
 
     apply plugin: "kotlin"
 }

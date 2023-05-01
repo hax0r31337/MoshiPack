@@ -162,6 +162,8 @@ class MsgpackReader(private val source: BufferedSource) : JsonReader() {
         val result: String
         if (p == PEEKED_STRING) {
             result = readString()
+        } else if (p == PEEKED_BINARRAY) {
+            result = readBinary()
         } else if (p == PEEKED_BUFFERED_NAME) {
             result = peekedString
         } else {

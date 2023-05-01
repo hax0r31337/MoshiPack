@@ -20,6 +20,7 @@ test {
 }
 
 apply plugin: 'maven'
+apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
 task javadocJar(type: Jar) {
@@ -38,6 +39,14 @@ artifacts {
 
 signing {
     sign configurations.archives
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+        }
+    }
 }
 
 if (project.hasProperty("ossrhUsername")) {
