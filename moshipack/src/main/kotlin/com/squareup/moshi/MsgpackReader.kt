@@ -1,9 +1,9 @@
 package com.squareup.moshi
 
 import com.squareup.moshi.JsonScope.EMPTY_DOCUMENT
-import com.squareup.moshi.JsonScope.NONEMPTY_OBJECT
 import okio.BufferedSource
 import java.io.IOException
+import java.util.*
 
 class MsgpackReader(private val source: BufferedSource) : JsonReader() {
 
@@ -16,6 +16,7 @@ class MsgpackReader(private val source: BufferedSource) : JsonReader() {
     private val PEEKED_FALSE = 6
     private val PEEKED_NULL = 7
     private val PEEKED_STRING = 8
+    private val PEEKED_BINARRAY = 9
     private val PEEKED_LONG = 16
     private val PEEKED_DOUBLE = 17
     private val PEEKED_EOF = 18
@@ -70,7 +71,19 @@ class MsgpackReader(private val source: BufferedSource) : JsonReader() {
 
         val readBytes = MsgpackFormat.STR.typeFor(currentTag)?.readSize(source, currentTag)
                 ?: throw IllegalStateException("Current tag 0x${currentTag.toString(16)} is not a string tag.")
-        return source.readUtf8(readBytes)
+        val string = source.readUtf8(readBytes)
+
+        return if (string.startsWith(MsgpackFormat.BINARRAYESCAPE) || string.startsWith(MsgpackFormat.STR_BINARRAYESCAPE)) {
+            "${MsgpackFormat.STR_BINARRAYESCAPE}$string"
+        } else string
+    }
+
+    private fun readBinary(): String {
+        if (peeked == PEEKED_NONE) doPeek()
+
+        val readBytes = MsgpackFormat.BIN.typeFor(currentTag)?.readSize(source, currentTag)
+            ?: throw IllegalStateException("Current tag 0x${currentTag.toString(16)} is not a string tag.")
+        return "${MsgpackFormat.BINARRAYESCAPE}${Base64.getEncoder().withoutPadding().encodeToString(source.readByteArray(readBytes))}"
     }
 
     override fun nextBoolean(): Boolean {
@@ -222,6 +235,8 @@ class MsgpackReader(private val source: BufferedSource) : JsonReader() {
             peekedString = ""
         } else if (p == PEEKED_LONG) {
             result = nextDouble().toString()
+        } else if (p == PEEKED_BINARRAY) {
+            result = readBinary()
         } else {
             throw JsonDataException("Expected a string but was " + peek() + " at path " + path)
         }
@@ -329,6 +344,7 @@ class MsgpackReader(private val source: BufferedSource) : JsonReader() {
             PEEKED_BEGIN_ARRAY -> Token.BEGIN_ARRAY
             PEEKED_END_ARRAY -> Token.END_ARRAY
             PEEKED_STRING, PEEKED_BUFFERED -> Token.STRING
+            PEEKED_BINARRAY -> Token.STRING
             PEEKED_TRUE, PEEKED_FALSE -> Token.BOOLEAN
             PEEKED_NULL -> Token.NULL
             PEEKED_DOUBLE, PEEKED_LONG -> Token.NUMBER
@@ -361,6 +377,7 @@ class MsgpackReader(private val source: BufferedSource) : JsonReader() {
             in MsgpackFormat.ARRAY -> peeked = PEEKED_BEGIN_ARRAY
             in MsgpackFormat.MAP -> peeked = PEEKED_BEGIN_OBJECT
             in MsgpackFormat.STR -> peeked = PEEKED_STRING
+            in MsgpackFormat.BIN -> peeked = PEEKED_BINARRAY
             in MsgpackFormat.FIX_INT_MIN..MsgpackFormat.FIX_INT_MAX,
             MsgpackFormat.UINT_8,
             MsgpackFormat.UINT_16,

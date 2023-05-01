@@ -1,11 +1,8 @@
 import com.daveanthonythomas.moshipack.MoshiPack
 import com.squareup.moshi.Moshi
-import com.squareup.moshi.MsgpackFormat
 import com.squareup.moshi.MsgpackReader
-import com.sun.xml.internal.ws.org.objectweb.asm.ClassAdapter
 import okio.Buffer
 import okio.ByteString
-import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.hasItems
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThat

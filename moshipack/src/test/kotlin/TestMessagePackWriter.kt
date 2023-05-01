@@ -1,6 +1,5 @@
 import com.daveanthonythomas.moshipack.MoshiPack
 import com.squareup.moshi.Moshi
-import com.squareup.moshi.MsgpackFormat
 import com.squareup.moshi.MsgpackIntByte
 import com.squareup.moshi.MsgpackWriter
 import okio.Buffer

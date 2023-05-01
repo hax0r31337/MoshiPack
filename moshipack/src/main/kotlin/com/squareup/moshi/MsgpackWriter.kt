@@ -1,15 +1,10 @@
 package com.squareup.moshi
 
-import okio.BufferedSink
-import com.squareup.moshi.JsonScope.DANGLING_NAME
-import com.squareup.moshi.JsonScope.EMPTY_ARRAY
-import com.squareup.moshi.JsonScope.EMPTY_DOCUMENT
-import com.squareup.moshi.JsonScope.EMPTY_OBJECT
-import com.squareup.moshi.JsonScope.NONEMPTY_ARRAY
-import com.squareup.moshi.JsonScope.NONEMPTY_DOCUMENT
-import com.squareup.moshi.JsonScope.NONEMPTY_OBJECT
-import java.io.IOException
+import com.squareup.moshi.JsonScope.*
 import okio.Buffer
+import okio.BufferedSink
+import java.io.IOException
+import java.util.*
 
 class MsgpackWriter(private val sink: BufferedSink) : JsonWriter() {
 
@@ -296,11 +291,28 @@ class MsgpackWriter(private val sink: BufferedSink) : JsonWriter() {
      */
     @Throws(IOException::class)
     private fun string(sink: BufferedSink, value: String) {
-        val bytes = value.toByteArray()
-        val tagType = MsgpackFormat.tagFor(MsgpackFormat.STR, bytes.size)
+
+        if (value.startsWith(MsgpackFormat.BINARRAYESCAPE)) {
+            val bytes = Base64.getDecoder().decode(value.substring(MsgpackFormat.BINARRAYESCAPE.length))
+            val tagType = MsgpackFormat.tagFor(MsgpackFormat.BIN, bytes.size)
+                ?: throw IllegalArgumentException("Binary size too long for msgpack format.")
+
+            tagType.writeTag(sink, bytes.size)
+            sink.write(bytes)
+        } else if (value.startsWith(MsgpackFormat.STR_BINARRAYESCAPE)) {
+            val bytes = value.substring(MsgpackFormat.STR_BINARRAYESCAPE.length).toByteArray(Charsets.UTF_8)
+            val tagType = MsgpackFormat.tagFor(MsgpackFormat.STR, bytes.size)
                 ?: throw IllegalArgumentException("String size too long for msgpack format.")
 
-        tagType.writeTag(sink, bytes.size)
-        sink.writeUtf8(value)
+            tagType.writeTag(sink, bytes.size)
+            sink.write(bytes)
+        } else {
+            val bytes = value.toByteArray(Charsets.UTF_8)
+            val tagType = MsgpackFormat.tagFor(MsgpackFormat.STR, bytes.size)
+                ?: throw IllegalArgumentException("String size too long for msgpack format.")
+
+            tagType.writeTag(sink, bytes.size)
+            sink.write(bytes)
+        }
     }
 }

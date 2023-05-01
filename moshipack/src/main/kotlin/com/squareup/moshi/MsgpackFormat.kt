@@ -5,16 +5,24 @@ import okio.BufferedSource
 
 object MsgpackFormat {
 
+    const val BINARRAYESCAPE = "\$MoshiBinaryData:"
+    const val STR_BINARRAYESCAPE = "\$MoshiStringData:"
+
     const val FIX_INT_MAX = 0x7f
     const val FIX_INT_MIN = -32
 
-    const val SIZE_8 = 255L
-    const val SIZE_16 = 65535L
-    const val SIZE_32 = 4294967295
+    const val SIZE_8 = 0xffL
+    const val SIZE_16 = 0xffffL
+    const val SIZE_32 = 0xffffffffL
 
     const val NIL = 0xc0.toByte()
     const val FALSE = 0xc2.toByte()
     const val TRUE = 0xc3.toByte()
+
+    val BIN_8 = MsgpackFormatType(0xc4.toByte(), SIZE_8)
+    val BIN_16 = MsgpackFormatType(0xc5.toByte(), SIZE_16)
+    val BIN_32 = MsgpackFormatType(0xc6.toByte(), SIZE_32)
+    val BIN = arrayOf(BIN_8, BIN_16, BIN_32)
 
     const val FLOAT_32 = 0xca.toByte()
     const val FLOAT_64 = 0xcb.toByte()

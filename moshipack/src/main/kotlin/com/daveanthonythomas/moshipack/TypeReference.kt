@@ -1,7 +1,6 @@
 package com.daveanthonythomas.moshipack
 
 import com.squareup.moshi.Types
-import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl
 import sun.reflect.generics.reflectiveObjects.WildcardTypeImpl
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
